@@ -1,2 +1,2 @@
 # aie-regDB
-The register definitions for aie-engine
+The register definitions for all devices of aie-engine
