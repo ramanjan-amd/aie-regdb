@@ -1,0 +1,39 @@
+{
+    "core_tile": {
+        "input": {
+            "out_aie2ps/aie2ps_core_module.json": "AIE2PS_CORE_MODULE",
+            "out_aie2ps/aie2ps_memory_module.json": "AIE2PS_MEMORY_MODULE"
+        },
+        "output": {
+            "out_aie2ps/aie2ps_core.json": "AIE2PS_CORE_TILE"
+        }
+    },
+    "mem_tile": {
+        "input": {
+            "out_aie2ps/aie2ps_mem_tile_module.json": "AIE2PS_MEM_TILE_MODULE"
+        },
+        "output": {
+            "out_aie2ps/aie2ps_mem.json": "AIE2PS_MEM_TILE"
+        }
+    },
+    "shim_tile": {
+        "input": {
+            "out_aie2ps/aie2ps_noc_module.json": "AIE2PS_NOC_MODULE",
+            "out_aie2ps/aie2ps_pl_module.json": "AIE2PS_PL_MODULE",
+            "out_aie2ps/aie2ps_uc_module.json": "AIE2PS_UC_MODULE"
+        },
+        "output": {
+            "out_aie2ps/aie2ps_shim.json": "AIE2PS_SHIM_TILE"
+        }
+    },
+    "final_regdb": {
+        "input": {
+            "out_aie2ps/aie2ps_core.json": "AIE2PS_CORE_TILE",
+            "out_aie2ps/aie2ps_mem.json": "AIE2PS_MEM_TILE",
+            "out_aie2ps/aie2ps_shim.json": "AIE2PS_SHIM_TILE"
+        },
+        "output": {
+            "out_aie2ps/aie2ps_regdb.json": "AIE2PS_REGDB"
+        }
+    }
+}
