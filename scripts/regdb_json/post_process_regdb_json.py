@@ -30,6 +30,15 @@ def combine_modules(modules, module_names, combined_name):
         # Remove the original module
         del modules[module_name]
 
+    # Sort the combined registers by address numerically
+    sorted_registers = {}
+    address_list = [(int(addr, 16), addr, reg) for addr, reg in combined_module['registers'].items()]
+    address_list.sort(key=lambda x: x[0])  # Sort by numerical address value
+    
+    for _, addr_str, register in address_list:
+        sorted_registers[addr_str] = register
+    
+    combined_module['registers'] = sorted_registers
     modules[combined_name] = combined_module
     print(f"Combined module '{combined_name}' created with {len(combined_module['registers'])} registers.")  # Debug log
 
@@ -47,14 +56,30 @@ def combine_final_regdb(input_files, output_file):
                 print(f"Error: Node '{node_name}' not found under 'modules' in {input_file}.")
                 sys.exit(1)
 
-            # Extract the node content from the 'modules' key
-            combined_data[node_name] = data['modules'][node_name]
+            # Extract the node content from the 'modules' key and sort registers by address
+            module_data = data['modules'][node_name]
+            if 'registers' in module_data:
+                # Sort registers by address numerically
+                registers = module_data['registers']
+                address_list = [(int(addr, 16), addr, reg) for addr, reg in registers.items()]
+                address_list.sort(key=lambda x: x[0])  # Sort by numerical address value
+                
+                sorted_registers = {}
+                for _, addr_str, register in address_list:
+                    sorted_registers[addr_str] = register
+                
+                module_data['registers'] = sorted_registers
+            
+            combined_data[node_name] = module_data
 
-    # Write the combined output to the specified file
+    # Write the combined output to the specified file with modules wrapper
+    final_output = {
+        "modules": combined_data
+    }
     with open(output_file, 'w') as file:
-        json.dump(combined_data, file, indent=4)
+        json.dump(final_output, file, indent=4)
 
-def process_input_description(input_description_file, final_output_file):
+def process_input_description(input_description_file, final_output_file=None):
     with open(input_description_file, 'r') as file:
         input_description = json.load(file)
 
@@ -63,8 +88,12 @@ def process_input_description(input_description_file, final_output_file):
 
         if tile_type == "final_regdb":
             input_files = tile_data['input']
-            # Use the provided final_output_file instead of the one in the JSON
-            combine_final_regdb(input_files, final_output_file)
+            # Use the provided final_output_file if given, otherwise use the default from JSON
+            if final_output_file:
+                output_file = final_output_file
+            else:
+                output_file, _ = list(tile_data['output'].items())[0]
+            combine_final_regdb(input_files, output_file)
             continue
 
         input_files = tile_data['input']
@@ -86,7 +115,20 @@ def process_input_description(input_description_file, final_output_file):
                     print(f"Warning: Module '{module_name}' not found in {input_file}. Skipping.")
                     continue
 
-                modules[module_name] = data['modules'][module_name]
+                # Sort registers in each module by address before combining
+                module_data = data['modules'][module_name]
+                if 'registers' in module_data:
+                    registers = module_data['registers']
+                    address_list = [(int(addr, 16), addr, reg) for addr, reg in registers.items()]
+                    address_list.sort(key=lambda x: x[0])  # Sort by numerical address value
+                    
+                    sorted_registers = {}
+                    for _, addr_str, register in address_list:
+                        sorted_registers[addr_str] = register
+                    
+                    module_data['registers'] = sorted_registers
+
+                modules[module_name] = module_data
 
         combine_modules(modules, list(input_files.values()), combined_name)
 
@@ -96,11 +138,28 @@ def process_input_description(input_description_file, final_output_file):
         print(f"Output written to {output_file}")  # Debug log
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
         print("Usage:")
-        print("  python post_process_regdb_json.py <post_process_input.json> <final_output.json>")
+        print("  python post_process_regdb_json.py <post_process_input.json> [output_filename]")
+        print("  If output_filename is provided, it will be used for the final regdb output.")
         sys.exit(1)
 
     input_description_file = sys.argv[1]
-    final_output_file = sys.argv[2]
+    final_output_file = sys.argv[2] if len(sys.argv) == 3 else None
+    
+    # Print processing details
+    print("=== RegDB JSON Post-Processing Started ===")
+    print(f"Configuration file: {input_description_file}")
+    if final_output_file:
+        print(f"Final output file: {final_output_file}")
+    else:
+        print("Final output file: Will use default from configuration")
+    print("=" * 45)
+    
     process_input_description(input_description_file, final_output_file)
+    
+    print("=" * 45)
+    print("=== RegDB JSON Post-Processing Completed ===")
+    if final_output_file:
+        print(f"Final RegDB file generated: {final_output_file}")
+    print("=" * 47)

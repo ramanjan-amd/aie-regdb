@@ -36,5 +36,65 @@ done
 #sed -i 's/AIE4_UC_MODULE/AIE4_UC_MODULE_A/' $OUTPUT_DIR/aie4_uc_module_a.json
 #sed -i 's/AIE4_UC_MODULE/AIE4_UC_MODULE_B/' $OUTPUT_DIR/aie4_uc_module_b.json
 
-./post_process_regdb_json.py post_process_input_aie4.json aie4_regdb_$REGDB_VERSION.json
+# Generate dynamic configuration
+TEMP_CONFIG="temp_post_process_config.json"
+cat > $TEMP_CONFIG << EOF
+{
+    "core_tile": {
+        "input": {
+            "$OUTPUT_DIR/aie4_core_module.json": "AIE4_CORE_MODULE",
+            "$OUTPUT_DIR/aie4_core_internal_module.json": "AIE4_CORE_INTERNAL_MODULE",
+            "$OUTPUT_DIR/aie4_memory_module.json": "AIE4_MEMORY_MODULE"
+        },
+        "output": {
+            "$OUTPUT_DIR/aie4_core_tile.json": "AIE4_CORE_TILE"
+        }
+    },
+    "mem_tile": {
+        "input": {
+            "$OUTPUT_DIR/aie4_mem_tile_module.json": "AIE4_MEM_TILE_MODULE"
+        },
+        "output": {
+            "$OUTPUT_DIR/aie4_mem_tile.json": "AIE4_MEM_TILE"
+        }
+    },
+    "shim_tile": {
+        "input": {
+            "$OUTPUT_DIR/aie4_noc_module.json": "AIE4_NOC_MODULE",
+            "$OUTPUT_DIR/aie4_pl_module.json": "AIE4_PL_MODULE",
+            "$OUTPUT_DIR/aie4_uc_module.json": "AIE4_UC_MODULE"           
+        },
+        "output": {
+            "$OUTPUT_DIR/aie4_shim_tile.json": "AIE4_SHIM_TILE"
+        }
+    },
+    "final_regdb": {
+        "input": {
+            "$OUTPUT_DIR/aie4_core_tile.json": "AIE4_CORE_TILE",
+            "$OUTPUT_DIR/aie4_mem_tile.json": "AIE4_MEM_TILE",
+            "$OUTPUT_DIR/aie4_shim_tile.json": "AIE4_SHIM_TILE"
+        },
+        "output": {
+            "$OUTPUT_DIR/aie4_regdb.json": "AIE4_REGDB"
+        }
+    }
+}
+EOF
+
+./post_process_regdb_json.py $TEMP_CONFIG aie4_regdb_$REGDB_VERSION.json
+
+# Check if post_process_regdb_json.py executed successfully
+if [ $? -eq 0 ]; then
+    echo "RegDB processing completed successfully. Cleaning up temporary files..."
+    # Clean up temporary config and intermediate files
+    rm -f $TEMP_CONFIG
+    rm -rf "$OUTPUT_DIR"
+    rm -f xregdb_log.html
+    echo "Cleanup completed."
+else
+    echo "Error: RegDB processing failed. Temporary files preserved for debugging."
+    echo "Temporary config: $TEMP_CONFIG"
+    echo "Output directory: $OUTPUT_DIR"
+    exit 1
+fi
 
