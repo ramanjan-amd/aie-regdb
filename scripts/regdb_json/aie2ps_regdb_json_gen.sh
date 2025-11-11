@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$#" -lt 2 ]; then
-    echo "Usage: $0 <input_directory> <regdb_version>"
+    echo "Usage: $0 <input_directory_for_RegDB> <RegDB_version>"
     exit 1
 fi
 
@@ -24,12 +24,45 @@ if [ -d "$OUTPUT_DIR" ]; then
 fi
 mkdir -p "$OUTPUT_DIR"
 
+echo "Looking for .ods files in: $INPUT_DIR"
+if ls $INPUT_DIR/*.ods 1> /dev/null 2>&1; then
+    echo "Found .ods files:"
+    ls -la $INPUT_DIR/*.ods
+else
+    echo "No .ods files found in $INPUT_DIR"
+    exit 1
+fi
+
+echo ""
+echo "Processing .ods files..."
+
 for ods_file in $INPUT_DIR/*.ods; do
     base_name=$(basename "$ods_file" .ods)
+    echo "Processing: $ods_file -> $OUTPUT_DIR/${base_name}.json"
     if [ -f "$INPUT_DIR/${base_name}.h" ]; then
-        xregdb.py "$ods_file" -regview_json "$OUTPUT_DIR/${base_name}.json"
+        echo "Found corresponding header file: $INPUT_DIR/${base_name}.h"
+        if xregdb.py "$ods_file" -regview_json "$OUTPUT_DIR/${base_name}.json"; then
+            if [ -f "$OUTPUT_DIR/${base_name}.json" ]; then
+                echo "Successfully created: $OUTPUT_DIR/${base_name}.json"
+            else
+                echo "Error: JSON file was not created: $OUTPUT_DIR/${base_name}.json"
+            fi
+        else
+            echo "Error: xregdb.py failed for $ods_file"
+        fi
+    else
+        echo "Warning: No corresponding header file found for ${base_name}.ods, skipping"
     fi
 done
+
+echo ""
+echo "Generated JSON files:"
+if ls $OUTPUT_DIR/*.json 1> /dev/null 2>&1; then
+    ls -la $OUTPUT_DIR/*.json
+else
+    echo "No JSON files were generated!"
+    exit 1
+fi
 
 # Generate dynamic configuration
 TEMP_CONFIG="temp_post_process_config_aie2ps.json"
@@ -75,7 +108,7 @@ cat > $TEMP_CONFIG << EOF
 }
 EOF
 
-./post_process_regdb_json.py $TEMP_CONFIG aie2ps_regdb_$REGDB_VERSION.json
+./post_process_regdb_json.py $TEMP_CONFIG aie2ps_regdb.json AIE2PS $REGDB_VERSION
 
 # Check if post_process_regdb_json.py executed successfully
 if [ $? -eq 0 ]; then

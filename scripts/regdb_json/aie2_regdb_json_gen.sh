@@ -31,57 +31,50 @@ for ods_file in $INPUT_DIR/*.ods; do
     fi
 done
 
-#xregdb.py  $INPUT_DIR/aie4_uc_module.ods -regview_json $OUTPUT_DIR/aie4_uc_module_b.json -base_addr 0x40000
-
-#sed -i 's/AIE4_UC_MODULE/AIE4_UC_MODULE_A/' $OUTPUT_DIR/aie4_uc_module_a.json
-#sed -i 's/AIE4_UC_MODULE/AIE4_UC_MODULE_B/' $OUTPUT_DIR/aie4_uc_module_b.json
-
 # Generate dynamic configuration
-TEMP_CONFIG="temp_post_process_config.json"
+TEMP_CONFIG="temp_post_process_config_aie2p.json"
 cat > $TEMP_CONFIG << EOF
 {
     "core_tile": {
         "input": {
-            "$OUTPUT_DIR/aie4_core_module.json": "AIE4_CORE_MODULE",
-            "$OUTPUT_DIR/aie4_core_internal_module.json": "AIE4_CORE_INTERNAL_MODULE",
-            "$OUTPUT_DIR/aie4_memory_module.json": "AIE4_MEMORY_MODULE"
+            "$OUTPUT_DIR/aie2p_core_module.json": "AIE2P_CORE_MODULE",
+            "$OUTPUT_DIR/aie2p_memory_module.json": "AIE2P_MEMORY_MODULE"
         },
         "output": {
-            "$OUTPUT_DIR/aie4_core_tile.json": "AIE4_CORE_TILE"
+            "$OUTPUT_DIR/aie2p_core.json": "AIE2P_CORE_TILE"
         }
     },
     "mem_tile": {
         "input": {
-            "$OUTPUT_DIR/aie4_mem_tile_module.json": "AIE4_MEM_TILE_MODULE"
+            "$OUTPUT_DIR/aie2p_mem_tile_module.json": "AIE2P_MEM_TILE_MODULE"
         },
         "output": {
-            "$OUTPUT_DIR/aie4_mem_tile.json": "AIE4_MEM_TILE"
+            "$OUTPUT_DIR/aie2p_mem.json": "AIE2P_MEM_TILE"
         }
     },
     "shim_tile": {
         "input": {
-            "$OUTPUT_DIR/aie4_noc_module.json": "AIE4_NOC_MODULE",
-            "$OUTPUT_DIR/aie4_pl_module.json": "AIE4_PL_MODULE",
-            "$OUTPUT_DIR/aie4_uc_module.json": "AIE4_UC_MODULE"           
+            "$OUTPUT_DIR/aie2p_noc_module.json": "AIE2P_NOC_MODULE",
+            "$OUTPUT_DIR/aie2p_pl_module.json": "AIE2P_PL_MODULE"
         },
         "output": {
-            "$OUTPUT_DIR/aie4_shim_tile.json": "AIE4_SHIM_TILE"
+            "$OUTPUT_DIR/aie2p_shim.json": "AIE2P_SHIM_TILE"
         }
     },
     "final_regdb": {
         "input": {
-            "$OUTPUT_DIR/aie4_core_tile.json": "AIE4_CORE_TILE",
-            "$OUTPUT_DIR/aie4_mem_tile.json": "AIE4_MEM_TILE",
-            "$OUTPUT_DIR/aie4_shim_tile.json": "AIE4_SHIM_TILE"
+            "$OUTPUT_DIR/aie2p_core.json": "AIE2P_CORE_TILE",
+            "$OUTPUT_DIR/aie2p_mem.json": "AIE2P_MEM_TILE",
+            "$OUTPUT_DIR/aie2p_shim.json": "AIE2P_SHIM_TILE"
         },
         "output": {
-            "$OUTPUT_DIR/aie4_regdb.json": "AIE4_REGDB"
+            "$OUTPUT_DIR/aie2p_regdb.json": "AIE2P_REGDB"
         }
     }
 }
 EOF
 
-./post_process_regdb_json.py $TEMP_CONFIG aie4_regdb.json AIE4 $REGDB_VERSION
+./post_process_regdb_json.py $TEMP_CONFIG aie2p_regdb.json AIE2P $REGDB_VERSION
 
 # Check if post_process_regdb_json.py executed successfully
 if [ $? -eq 0 ]; then
@@ -97,4 +90,3 @@ else
     echo "Output directory: $OUTPUT_DIR"
     exit 1
 fi
-

@@ -42,7 +42,7 @@ def combine_modules(modules, module_names, combined_name):
     modules[combined_name] = combined_module
     print(f"Combined module '{combined_name}' created with {len(combined_module['registers'])} registers.")  # Debug log
 
-def combine_final_regdb(input_files, output_file):
+def combine_final_regdb(input_files, output_file, device_generation=None, regdb_version=None):
     combined_data = {}
 
     for input_file, node_name in input_files.items():
@@ -73,13 +73,21 @@ def combine_final_regdb(input_files, output_file):
             combined_data[node_name] = module_data
 
     # Write the combined output to the specified file with modules wrapper
-    final_output = {
-        "modules": combined_data
-    }
+    final_output = {}
+    
+    # Add device generation and RegDB version if provided
+    if device_generation:
+        final_output["Device Generation"] = device_generation
+    if regdb_version:
+        final_output["RegDB Version"] = regdb_version
+    
+    # Add the modules data
+    final_output["modules"] = combined_data
+    
     with open(output_file, 'w') as file:
         json.dump(final_output, file, indent=4)
 
-def process_input_description(input_description_file, final_output_file=None):
+def process_input_description(input_description_file, final_output_file=None, device_generation=None, regdb_version=None):
     with open(input_description_file, 'r') as file:
         input_description = json.load(file)
 
@@ -93,7 +101,7 @@ def process_input_description(input_description_file, final_output_file=None):
                 output_file = final_output_file
             else:
                 output_file, _ = list(tile_data['output'].items())[0]
-            combine_final_regdb(input_files, output_file)
+            combine_final_regdb(input_files, output_file, device_generation, regdb_version)
             continue
 
         input_files = tile_data['input']
@@ -138,14 +146,18 @@ def process_input_description(input_description_file, final_output_file=None):
         print(f"Output written to {output_file}")  # Debug log
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2 or len(sys.argv) > 3:
+    if len(sys.argv) < 2 or len(sys.argv) > 5:
         print("Usage:")
-        print("  python post_process_regdb_json.py <post_process_input.json> [output_filename]")
+        print("  python post_process_regdb_json.py <post_process_input.json> [output_filename] [device_generation] [regdb_version]")
         print("  If output_filename is provided, it will be used for the final regdb output.")
+        print("  If device_generation is provided, it will be added to the final output (e.g., AIE4, AIE2PS, AIE2P).")
+        print("  If regdb_version is provided, it will be added to the final output (e.g., r0p48, r1p4).")
         sys.exit(1)
 
     input_description_file = sys.argv[1]
-    final_output_file = sys.argv[2] if len(sys.argv) == 3 else None
+    final_output_file = sys.argv[2] if len(sys.argv) >= 3 else None
+    device_generation = sys.argv[3] if len(sys.argv) >= 4 else None
+    regdb_version = sys.argv[4] if len(sys.argv) >= 5 else None
     
     # Print processing details
     print("=== RegDB JSON Post-Processing Started ===")
@@ -154,9 +166,13 @@ if __name__ == "__main__":
         print(f"Final output file: {final_output_file}")
     else:
         print("Final output file: Will use default from configuration")
+    if device_generation:
+        print(f"Device Generation: {device_generation}")
+    if regdb_version:
+        print(f"RegDB Version: {regdb_version}")
     print("=" * 45)
     
-    process_input_description(input_description_file, final_output_file)
+    process_input_description(input_description_file, final_output_file, device_generation, regdb_version)
     
     print("=" * 45)
     print("=== RegDB JSON Post-Processing Completed ===")

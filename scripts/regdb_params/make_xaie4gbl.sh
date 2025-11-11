@@ -41,12 +41,19 @@ echo "ME_ROOT set to: $ME_ROOT"
 echo "make_headers.sh path set to: $make_headers_path"
 echo "Version set to: $version"
 
-echo "Copying make_headers.sh to ME_ROOT"
-cp $make_headers_path $ME_ROOT/make_headers.sh
+if [ ! -f "$ME_ROOT/make_headers.sh" ]; then
+  echo "Copying make_headers.sh to ME_ROOT"
+  cp $make_headers_path $ME_ROOT/make_headers.sh
+else
+  echo "make_headers.sh already exists in ME_ROOT, skipping copy"
+fi
 
 echo "Generating the headers files from regDB"
 chmod +x $ME_ROOT/make_headers.sh
-$ME_ROOT/make_headers.sh
+echo "Executing make_headers.sh..."
+echo "Changing directory to: $ME_ROOT"
+cd $ME_ROOT && echo "Current directory: $(pwd)" && ./make_headers.sh && echo "Changing back to previous directory" && cd - && echo "Current directory: $(pwd)"
+echo "make_headers.sh execution completed"
 
 rm -rf $ME_ROOT/all_headers.h
 rm -rf $ME_ROOT/newfilewithoutcomments.h
