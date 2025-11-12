@@ -37,22 +37,8 @@ echo ""
 echo "Processing .ods files..."
 
 for ods_file in $INPUT_DIR/*.ods; do
-    base_name=$(basename "$ods_file" .ods)
-    echo "Processing: $ods_file -> $OUTPUT_DIR/${base_name}.json"
-    if [ -f "$INPUT_DIR/${base_name}.h" ]; then
-        echo "Found corresponding header file: $INPUT_DIR/${base_name}.h"
-        if xregdb.py "$ods_file" -regview_json "$OUTPUT_DIR/${base_name}.json"; then
-            if [ -f "$OUTPUT_DIR/${base_name}.json" ]; then
-                echo "Successfully created: $OUTPUT_DIR/${base_name}.json"
-            else
-                echo "Error: JSON file was not created: $OUTPUT_DIR/${base_name}.json"
-            fi
-        else
-            echo "Error: xregdb.py failed for $ods_file"
-        fi
-    else
-        echo "Warning: No corresponding header file found for ${base_name}.ods, skipping"
-    fi
+    base_name=$(basename "$ods_file" .ods)  
+    xregdb.py "$ods_file" -regview_json "$OUTPUT_DIR/${base_name}.json"
 done
 
 echo ""
@@ -74,7 +60,7 @@ cat > $TEMP_CONFIG << EOF
             "$OUTPUT_DIR/aie2ps_memory_module.json": "AIE2PS_MEMORY_MODULE"
         },
         "output": {
-            "$OUTPUT_DIR/aie2ps_core.json": "AIE2PS_CORE_TILE"
+            "$OUTPUT_DIR/aie2ps_core.json": "AIE2PS_AIE_TILE"
         }
     },
     "mem_tile": {
@@ -95,11 +81,20 @@ cat > $TEMP_CONFIG << EOF
             "$OUTPUT_DIR/aie2ps_shim.json": "AIE2PS_SHIM_TILE"
         }
     },
+    "npi": {
+        "input": {
+            "$OUTPUT_DIR/aie2ps_npi_regdb.json": "AIE2P_S_NPI"
+        },
+        "output": {
+            "$OUTPUT_DIR/aie2ps_npi.json": "AIE2PS_NPI"
+        }
+    },
     "final_regdb": {
         "input": {
-            "$OUTPUT_DIR/aie2ps_core.json": "AIE2PS_CORE_TILE",
+            "$OUTPUT_DIR/aie2ps_core.json": "AIE2PS_AIE_TILE",
             "$OUTPUT_DIR/aie2ps_mem.json": "AIE2PS_MEM_TILE",
-            "$OUTPUT_DIR/aie2ps_shim.json": "AIE2PS_SHIM_TILE"
+            "$OUTPUT_DIR/aie2ps_shim.json": "AIE2PS_SHIM_TILE",
+            "$OUTPUT_DIR/aie2ps_npi.json": "AIE2PS_NPI"
         },
         "output": {
             "$OUTPUT_DIR/aie2ps_regdb.json": "AIE2PS_REGDB"

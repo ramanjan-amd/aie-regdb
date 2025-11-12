@@ -24,17 +24,31 @@ if [ -d "$OUTPUT_DIR" ]; then
 fi
 mkdir -p "$OUTPUT_DIR"
 
+echo "Looking for .ods files in: $INPUT_DIR"
+if ls $INPUT_DIR/*.ods 1> /dev/null 2>&1; then
+    echo "Found .ods files:"
+    ls -la $INPUT_DIR/*.ods
+else
+    echo "No .ods files found in $INPUT_DIR"
+    exit 1
+fi
+
+echo ""
+echo "Processing .ods files..."
+
 for ods_file in $INPUT_DIR/*.ods; do
-    base_name=$(basename "$ods_file" .ods)
-    if [ -f "$INPUT_DIR/${base_name}.h" ]; then
-        xregdb.py "$ods_file" -regview_json "$OUTPUT_DIR/${base_name}.json"
-    fi
+    base_name=$(basename "$ods_file" .ods)  
+    xregdb.py "$ods_file" -regview_json "$OUTPUT_DIR/${base_name}.json"
 done
 
-#xregdb.py  $INPUT_DIR/aie4_uc_module.ods -regview_json $OUTPUT_DIR/aie4_uc_module_b.json -base_addr 0x40000
-
-#sed -i 's/AIE4_UC_MODULE/AIE4_UC_MODULE_A/' $OUTPUT_DIR/aie4_uc_module_a.json
-#sed -i 's/AIE4_UC_MODULE/AIE4_UC_MODULE_B/' $OUTPUT_DIR/aie4_uc_module_b.json
+echo ""
+echo "Generated JSON files:"
+if ls $OUTPUT_DIR/*.json 1> /dev/null 2>&1; then
+    ls -la $OUTPUT_DIR/*.json
+else
+    echo "No JSON files were generated!"
+    exit 1
+fi
 
 # Generate dynamic configuration
 TEMP_CONFIG="temp_post_process_config.json"
@@ -47,7 +61,7 @@ cat > $TEMP_CONFIG << EOF
             "$OUTPUT_DIR/aie4_memory_module.json": "AIE4_MEMORY_MODULE"
         },
         "output": {
-            "$OUTPUT_DIR/aie4_core_tile.json": "AIE4_CORE_TILE"
+            "$OUTPUT_DIR/aie4_core_tile.json": "AIE4_AIE_TILE"
         }
     },
     "mem_tile": {
@@ -68,11 +82,20 @@ cat > $TEMP_CONFIG << EOF
             "$OUTPUT_DIR/aie4_shim_tile.json": "AIE4_SHIM_TILE"
         }
     },
+    "npi": {
+        "input": {
+            "$OUTPUT_DIR/aie4_npi_regdb.json": "AIE4_NPI"
+        },
+        "output": {
+            "$OUTPUT_DIR/aie4_npi.json": "AIE4_NPI"
+        }
+    },
     "final_regdb": {
         "input": {
-            "$OUTPUT_DIR/aie4_core_tile.json": "AIE4_CORE_TILE",
+            "$OUTPUT_DIR/aie4_core_tile.json": "AIE4_AIE_TILE",
             "$OUTPUT_DIR/aie4_mem_tile.json": "AIE4_MEM_TILE",
-            "$OUTPUT_DIR/aie4_shim_tile.json": "AIE4_SHIM_TILE"
+            "$OUTPUT_DIR/aie4_shim_tile.json": "AIE4_SHIM_TILE",
+            "$OUTPUT_DIR/aie4_npi.json": "AIE4_NPI"
         },
         "output": {
             "$OUTPUT_DIR/aie4_regdb.json": "AIE4_REGDB"
